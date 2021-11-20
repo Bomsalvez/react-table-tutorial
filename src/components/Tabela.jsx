@@ -1,8 +1,9 @@
 import {useMemo} from "react";
-import {useTable} from "react-table/src/hooks/useTable";
+import {useTable, useSortBy, useGlobalFilter} from "react-table";
 import MOCK_DATA from './MOCK_DATA.json';
 import './Table.css';
-import {useSortBy} from "react-table/src/plugin-hooks/useSortBy";
+import {format} from "date-fns";
+import {GlobalFilter} from "./GlobalFilter";
 
 const collumns = [
     {
@@ -20,6 +21,11 @@ const collumns = [
     {
         Header: 'E-mail',
         accessor: 'email'
+    }, {
+        Header: 'Data',
+        accessor: 'data',
+        Cell: ({value}) => format(new Date(value), 'dd/MM/yyyy')
+
     },
 ]
 
@@ -33,34 +39,41 @@ export const Table = () => {
         getTableBodyProps,
         headerGroups,
         rows,
-        prepareRow
-    } = useTable({columns, data}, useSortBy);
+        prepareRow,
+        state,
+        setGlobalFilter
+    } = useTable({columns, data}, useSortBy, useGlobalFilter);
+
+    const {globalFilter} = state
 
     return (
-        <table {...getTableProps()}>
-            <thead>
-            {headerGroups.map(hg =>
-                <tr{...hg.getHeaderGroupProps()}>
-                    {hg.headers.map(column =>
-                        <th{...column.getHeaderProps(column.getSortByToggleProps())}>
-                            {column.render('Header')}
-                            {/*<span>{column.isSorted ? (column.isSortedDesc ? '🔽' : '🔼') : ''}</span>*/}
-                        </th>)}
-                </tr>
-            )}
-            </thead>
-            <tbody {...getTableBodyProps()}>
-            {rows.map(row => {
-                prepareRow(row)
-                return (
-                    <tr{...row.getRowProps}>
-                        {row.cells.map(cell =>
-                            <td{...cell.getCellProps()}>{cell.render('Cell')}</td>)}
+        <>
+            <GlobalFilter filter={globalFilter} setFilter={setGlobalFilter}/>
+            <table {...getTableProps()}>
+                <thead>
+                {headerGroups.map(hg =>
+                    <tr{...hg.getHeaderGroupProps()}>
+                        {hg.headers.map(column =>
+                            <th{...column.getHeaderProps(column.getSortByToggleProps())}>
+                                {column.render('Header')}
+                                <span>{column.isSorted ? (column.isSortedDesc ? '🔽' : '🔼') : ''}</span>
+                            </th>)}
                     </tr>
-                )
-            })}
-            </tbody>
-        </table>
+                )}
+                </thead>
+                <tbody {...getTableBodyProps()}>
+                {rows.map(row => {
+                    prepareRow(row)
+                    return (
+                        <tr{...row.getRowProps}>
+                            {row.cells.map(cell =>
+                                <td{...cell.getCellProps()}>{cell.render('Cell')}</td>)}
+                        </tr>
+                    )
+                })}
+                </tbody>
+            </table>
+        </>
     )
 }
 
