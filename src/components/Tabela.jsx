@@ -1,31 +1,21 @@
 import {useMemo} from "react";
-import {useTable, useSortBy, useGlobalFilter} from "react-table";
+import {useGlobalFilter, usePagination, useSortBy, useTable} from "react-table";
 import MOCK_DATA from './MOCK_DATA.json';
 import './Table.css';
-import {format} from "date-fns";
 import {GlobalFilter} from "./GlobalFilter";
 
 const collumns = [
     {
-        Header: 'ID',
-        accessor: 'id'
+        Header: 'Fornecedor',
+        acessor: 'nomeFantasia',
     },
     {
-        Header: 'Nome',
-        accessor: 'first_name'
+        Header: 'Telefone',
+        acessor: 'telefoneFornecedor',
     },
     {
-        Header: 'Sobrenome',
-        accessor: 'last_name'
-    },
-    {
-        Header: 'E-mail',
-        accessor: 'email'
-    }, {
-        Header: 'Data',
-        accessor: 'data',
-        Cell: ({value}) => format(new Date(value), 'dd/MM/yyyy')
-
+        Header: 'Ações',
+        acessor: 'acao',
     },
 ]
 
@@ -38,13 +28,24 @@ export const Table = () => {
         getTableProps,
         getTableBodyProps,
         headerGroups,
-        rows,
+        page,
+        nextPage,
+        previousPage,
+        canNextPage,
+        canPreviousPage,
+        pageOptions,
+        gotoPage,
+        setPageSize,
         prepareRow,
         state,
         setGlobalFilter
-    } = useTable({columns, data}, useSortBy, useGlobalFilter);
+    } = useTable({columns, data},
+        useGlobalFilter,
+        useSortBy,
+        usePagination
+    );
 
-    const {globalFilter} = state
+    const {globalFilter, pageIndex, pageSize} = state;
 
     return (
         <>
@@ -62,10 +63,10 @@ export const Table = () => {
                 )}
                 </thead>
                 <tbody {...getTableBodyProps()}>
-                {rows.map(row => {
+                {page.map((row, i) => {
                     prepareRow(row)
                     return (
-                        <tr{...row.getRowProps}>
+                        <tr key={i} {...row.getRowProps}>
                             {row.cells.map(cell =>
                                 <td{...cell.getCellProps()}>{cell.render('Cell')}</td>)}
                         </tr>
@@ -73,6 +74,16 @@ export const Table = () => {
                 })}
                 </tbody>
             </table>
+            <div>
+                <select value={pageSize} onChange={event => setPageSize(Number(event.target.value))}>
+                    {[10, 25, 50].map(pageSize => <option value={pageSize} key={pageSize}>{pageSize}</option>)}
+                </select>
+                <span>Pag{' '}<strong>{pageIndex + 1} de {pageOptions.length}</strong>{' '}</span>
+                <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>{'<<'}</button>
+                <button onClick={() => previousPage()} disabled={!canPreviousPage}>{'<'}</button>
+                <button onClick={() => nextPage()} disabled={!canNextPage}>{'>'}</button>
+                <button onClick={() => gotoPage(pageOptions.length - 1)} disabled={!canNextPage}>{'>>'}</button>
+            </div>
         </>
     )
 }
